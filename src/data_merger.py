@@ -39,7 +39,7 @@ if data_norm_files.exists():
             files_dataset.append(row.replace('\n', ''))
 
 dataset = ''
-fist = True
+first = True
 
 for file in rs_path.iterdir():
     if '_norm.csv' in file.name and file.name not in files_dataset:
@@ -51,9 +51,10 @@ for file in rs_path.iterdir():
             dataset = data.copy()
             first = False
         else:
-            dataset = dataset.append(data1, ignore_index=True)
+            dataset = dataset.append(data, ignore_index=True)
         files_dataset.append(file.name)
-        
+
+print('storing dataset')        
 dataset.to_csv(Path(rs_path, 'dataset_normalized.csv'), index=False)
 
 # list of file that have been added tothe dataset_normalized file
