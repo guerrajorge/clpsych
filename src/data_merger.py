@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 import numpy as np
 from datetime import datetime
+import tqdm
 
 project_name = 'clpsych'
 project_path = Path(os.getcwd()).parent
@@ -36,28 +37,47 @@ if data_norm_files.exists():
     # list of file that have been added tothe dataset_normalized file
     with data_norm_files.open('r') as in_file:
         for row in in_file:
-            files_dataset.append(row.replace('\n', ''))
+            if row != '' and 'version' not in row:
+                files_dataset.append(row.replace('\n', ''))
 
 dataset = ''
 first = True
 
+year = '2012'
+
+new_files_dataset = list()
+
 for file in rs_path.iterdir():
-    if '_norm.csv' in file.name and file.name not in files_dataset:
+    if '_norm.csv' in file.name and file.name not in files_dataset and year in file.name:
         print('file = {0}'.format(file.stem))
         print('\t reading - {0}'.format( datetime.now()))
-        data = pd.read_csv(file)
+        data = pd.read_csv(file, encoding='utf-8')
         data.dropna(axis=0, inplace=True)
         if first:
             dataset = data.copy()
             first = False
         else:
             dataset = dataset.append(data, ignore_index=True)
-        files_dataset.append(file.name)
+            
+        new_files_dataset.append(file.name)
+        print('\t data appended')
 
-print('storing dataset')        
-dataset.to_csv(Path(rs_path, 'dataset_normalized.csv'), index=False)
+data_norm_file = Path(rs_path, 'dataset_normalized_{0}.csv'.format(year))
 
-# list of file that have been added tothe dataset_normalized file
+print('encoding')
+dataset.title_body = dataset.title_body.str.encode('utf-8')
+dataset.subreddit = dataset.subreddit.str.encode('utf-8')
+
+if data_norm_file.exists():
+    with data_norm_file.open('a') as out_file:
+        dataset.to_csv(out_file, header=False, index=False, encoding='utf-8')
+else:
+    dataset.to_csv(data_norm_file, index=False, encoding='utf-8')
+print('dataset stored successfully')
+
+# list of file that have been added to the dataset_normalized file
 with data_norm_files.open('a') as out_file:
-    for file_name in files_dataset:
-        out_file.write('{0}\n'.format(file_name))     
+    out_file.write('\n{0}\n\n'.format(year))
+    for file_name in new_files_dataset:
+        out_file.write('{0}\n'.format(file_name))
+    print('dataset files name stored successfully')

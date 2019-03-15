@@ -21,6 +21,7 @@ def clean_str(string):
         string = re.sub(r'[\w\.-]+@[\w\.-]+', '_EMAIL_', string)
         string = re.sub(r'address = ([0-9]{1,3}[\.]){3}[0-9]{1,3}', '_IP_', string)
         string = string.replace('[deleted]', '')
+        string = string.replace('nan', '')
         return string.strip()
 
 project_name = 'clpsych'
@@ -42,16 +43,13 @@ print('project path = {0}'.format(project_path))
 print('data path = {0}'.format(data_path))
 print('')
 print('sys.path = {0}'.format(sys.path))
-		
+
 rs_path = Path(data_path, 'submissions')
 # get all the json files and their stem
 processed_files = [element.replace('norm.csv', '') 
                    for element in os.listdir(rs_path) if 'norm.csv' in element]
 
-need_to_process = ['RS_2016-02',
- 'RS_2016-03',
- 'RS_2016-04',
- 'RS_2016-05']
+need_to_process = []
 
 for file in rs_path.iterdir():
     if file.suffix == '.csv' and file.stem not in processed_files and not file.is_dir() and file.stem in need_to_process:
@@ -61,11 +59,19 @@ for file in rs_path.iterdir():
         total = data.shape[0]
         print('\t processing - {0}'.format(datetime.now()))
         final = list()
-        for row_ix, row in enumerate(data['title'] + data['selftext']):
-            print('\t\t {0}/{1}'.format(row_ix, total))
+        for row in data['title'].astype(str) + data['selftext'].astype(str):
             final.append(clean_str(row))
         print('\t storing - {0}'.format(datetime.now()))
         n_data = pd.DataFrame({'title_body': final})
+        n_data['subreddit'] = data['subreddit']
         new_filename = file.stem + '_norm.csv'
         n_data.to_csv(Path(rs_path, new_filename), index=False)
+        print('\t stats - {0}'.format(datetime.now()))
+        stats = n_data.groupby('subreddit').count()
+        stats['total posts'] = ''
+        stats['total posts'].iloc[0] = data.shape[0]
+        stats_filename = file.stem + '_norm_stats.csv'
+        stats_file = Path(rs_path, stats_filename)
+        stats.to_csv(stats_file)
         print('\t finished {0}'.format(datetime.now()))
+        processed_files.append(file.stem)
