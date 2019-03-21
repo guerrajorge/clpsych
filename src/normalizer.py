@@ -18,6 +18,7 @@ def clean_str(string):
         """
         string = string.replace('  ','')
         string = re.sub(r'((http|https|ftp|ftps)\:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\/\S*)?)', '_URL_', string)
+        string = re.sub(r'[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\/\S*)?', '_URL_', string)
         string = re.sub(r'[\w\.-]+@[\w\.-]+', '_EMAIL_', string)
         string = re.sub(r'address = ([0-9]{1,3}[\.]){3}[0-9]{1,3}', '_IP_', string)
         string = string.replace('[deleted]', '')
@@ -46,7 +47,7 @@ print('sys.path = {0}'.format(sys.path))
 
 rs_path = Path(data_path, 'submissions')
 # get all the json files and their stem
-processed_files = [element.replace('norm.csv', '') 
+processed_files = [element.replace('_norm.csv', '') 
                    for element in os.listdir(rs_path) if 'norm.csv' in element]
 
 need_to_process = []
